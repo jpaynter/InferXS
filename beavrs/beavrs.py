@@ -3142,8 +3142,7 @@ E__15 = cells['Fuel 3.1 w/o lattice']['univ'],
     zbot = twoDlower
     ztop = twoDhigher 
   sett = { 
-            'xslib':        '/home/shared/mcnpdata/binary/cross_sections.xml',
-#            'xslib':        '/home/nhorelik/xsdata/cross_sections.xml',
+            'xslib':        '/home/wbinventor/Documents/NSE-CRPG-Codes/mcnpdata/binary/cross_sections.xml',
             'batches':      350,
             'inactive':     250,
             'particles':    int(4e6),
