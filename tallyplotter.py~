@@ -1,0 +1,47 @@
+from statepoint import StatePoint
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+
+sp = StatePoint('pincell/statepoint.70.h5')
+sp.read_results()
+
+# Plot the 
+
+# Plot the convergence of keff
+# Plot the convergence of keff variance (overlaid with 1/sqrt(n))
+# Plot the convergence of each tally variance (overlaid with 1/sqrt(n))
+
+tallyid = 1
+score = 'nu-fission'
+data = sp.extract_results(tallyid, score)
+means = data['CI95']
+
+# Reshape to grid with energy as third index
+means = np.reshape(means,(100,100,2))
+
+fig = plt.figure()
+plt.ion()
+img = plt.imshow(means[:,:,0], interpolation='nearest', animated=True)
+plt.title('High Energy Flux')
+plt.colorbar()
+plt.draw()
+n
+for i in range(20,110,10):
+
+    sp = StatePoint('pincell/statepoint.' + str(i) + '.h5')
+    sp.read_results()
+
+    tallyid = 1
+    score = 'nu-fission'
+    data = sp.extract_results(tallyid, score)
+    means = data['CI95']
+    print data.keys()
+
+    # Reshape to grid with energy as third index
+    means = np.reshape(means,(100,100,2))
+
+    plt.imshow(means[:,:,0], interpolation='nearest')
+    plt.draw()
+    time.sleep(0.3)
