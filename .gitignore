@@ -1,4 +1,8 @@
-*.xml
-*/*.xml
 *.pyc
 */*.pyc
+*.h5
+*/*.h5
+*.png
+*/*.png
+*.ppm
+*/*.ppm
