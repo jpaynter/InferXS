@@ -9,7 +9,7 @@
   <!-- How verbose output should be -->
   <verbosity value="7" />
 
-  <state_point interval="10" />
+  <state_point interval="1" />
 
   <seed>1</seed>
 
