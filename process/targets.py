@@ -3,7 +3,10 @@
    Author: William Boyd
    Date: 11/4/2013
 
-   Usage: python convert.py
+   Usage: python targets.py
+
+   NOTE: This file can only be run on nsecluster.mit.edu where all of the 
+   Monte Carlo data is stored.
  
    This python script is for data processing of converged Monte Carlo data from
    the OpenMC code. In particular, this script extracts the batch means for 

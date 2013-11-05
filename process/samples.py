@@ -1,4 +1,28 @@
-'''
+'''Data processing script to generate a samples file with targets and features.
+
+   Author: William Boyd
+   Date: 11/5/2013
+
+   Usage: python samples.py
+
+   NOTE: This file must be run after first running "features.py" and 
+   targets.py". This file can only be run on nsecluster.mit.edu where all
+   of the Monte Carlo data is stored.
+
+   This python script is for data processing of converged Monte Carlo data from
+   the OpenMC code. In particular, this script creates an HDF5 file to store
+   samples for different tally types - ie, total reaction rate, absorption
+   reaction rate, fission cross-section, etc. The feature vectors are created
+   by pulling 9 tallies from a 3x3 mesh laid on top of each fuel pin cell. The
+   target values are the converged Monte Carlo tallies on a 1x1 mesh laid across
+   each pin cell. For each case, a simulation was run using one of 10 different
+   random number seeds, for a total of 17x17x10 samples for 17x17 target values.
+   In addition, the script stores data for different batch means for each
+   sample (approximations to the sample by varying the number of particles in
+   the Monte Carlo simulation).
+
+   This data extraction and reorganization is performed for 3 different fuel 
+   assembly types. The assemblies are taken from the BEAVRS benchmark. 
 '''
 
 import h5py as h5
