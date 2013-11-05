@@ -5,7 +5,7 @@
 
 
   <!-- Parameters for eigenvalue calculation -->
-  <eigenvalue batches="1000" inactive="250" particles="40000" />
+  <eigenvalue batches="1250" inactive="250" particles="40000" />
 
   <!-- How verbose output should be -->
   <verbosity value="7" />

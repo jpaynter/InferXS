@@ -9,16 +9,16 @@ batch_start = 260
 batch_stop = 1000
 batch_interval = 10
 
-#directory = '../openmc-input/Fuel-1.6wo-CRD/pinwise/'
+directory = '../openmc-input/Fuel-1.6wo-CRD/pinwise/'
 #directory = '../openmc-input/Fuel-2.4wo-16BA-grid-56/pinwise/'
 #directory = '../openmc-input/Fuel-3.1wo-instr-16BA-grid-17/pinwise/'
 
 #directory = '../openmc-input/Fuel-1.6wo-CRD/three-by-three/500_per_batch/'
 #directory = '../openmc-input/Fuel-2.4wo-16BA-grid-56/three-by-three/500_per_batch/'
-directory = '../openmc-input/Fuel-3.1wo-instr-16BA-grid-17/three-by-three/500_per_batch/'
+#directory = '../openmc-input/Fuel-3.1wo-instr-16BA-grid-17/three-by-three/500_per_batch/'
 
 # score options are 'fission' 'nu-fission' 'absorption' 'flux' 'total'
-score1 = 'flux'
+score1 = 'fission'
 score2 = 'total'
 
 # energy options are 1 or 2
@@ -26,8 +26,8 @@ energy = 2
 num_groups = 2
 
 # Mesh is 17x17 or 51x51
-mesh_x_dim = 51
-mesh_y_dim = 51
+mesh_x_dim = 17
+mesh_y_dim = 17
 
 
 ################################################################################
