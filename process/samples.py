@@ -120,13 +120,12 @@ for assembly in assemblies:
         for batch in batches:
 
             print '        batch-'+str(batch)
-            batch += 250
 
             if not ('Batch-'+str(batch)) in assembly_group.keys():
                 batch_group = assembly_group.create_group('Batch-'+str(batch))
 
             batch_group = assembly_group['Batch-'+str(batch)]
-            features = feature_file[assembly][seed]['Batch-'+str(batch)]
+            features = feature_file[assembly][seed]['Batch-'+str(batch+250)]
 
             for energy in energies:
 
