@@ -82,7 +82,6 @@ for assembly in assemblies:
             # Import the OpenMC results for this assembly
             filename = '../openmc-input/'+assembly+'/three-by-three/' + seed
             filename += '/statepoint.'+str(batch)+'.h5'
-#            print filename
             sp = StatePoint(filename)
             sp.read_results()
             
