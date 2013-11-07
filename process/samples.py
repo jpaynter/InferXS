@@ -30,15 +30,14 @@ import numpy as np
 import os
 
 
+def exportSamples(samples, mc_features, geom_features, targets, energy, dataset):
 
-def exportSamples(samples, features, targets, energy, dataset):
-
-    features = features[energy][dataset][...]
+    mc_features = mc_features[energy][dataset][...]
     targets = targets[energy][dataset][...]
 
     # Initialize an array for all of the feature vectors (stored as rows)
     # for each sample - indexed first by sample, then feature
-    new_features = np.zeros((17*17, 9))
+    new_features = np.zeros((17*17, 18))
     new_targets = np.zeros((17*17,1))
 
     # Initialie the sample counter
@@ -53,7 +52,10 @@ def exportSamples(samples, features, targets, energy, dataset):
 
             # Populate the feature vector for this sample
             for i in enumerate(mask):
-                new_features[sample_cnt, i[0]] = features[i[1][0], i[1][1]]
+                new_features[sample_cnt, i[0]] = mc_features[i[1][0], i[1][1]]
+            
+            # Append geometry/materials features to the feature vector
+            new_features[sample_cnt, 9:] = geom_features[sample_cnt,:]
 
             # Extract the target for this sample
             new_targets[sample_cnt] = targets[x][y]
@@ -72,16 +74,16 @@ def exportSamples(samples, features, targets, energy, dataset):
         feature_dataset.resize((feature_shape[0]+17*17, feature_shape[1]))
         target_dataset.resize((target_shape[0]+17*17, target_shape[1]))
 
-        feature_dataset[feature_shape[0]:, :] = new_features
+        feature_dataset[feature_shape[0]:,:] = new_features
         target_dataset[target_shape[0]:] = new_targets
 
     else:
 
-        samples.create_dataset('Features', (17*17,9), maxshape=(None,9))
+        samples.create_dataset('Features', (17*17,18), maxshape=(None,18))
         samples.create_dataset('Targets', (17*17,1), maxshape=(None,1))
 
         samples['Features'][:,:] = new_features
-        samples['Targets'][:] = new_targets
+        samples['Targets'][:,:] = new_targets
 
     return
 
@@ -89,10 +91,9 @@ def exportSamples(samples, features, targets, energy, dataset):
 # Remove old HDF5 samples data file
 os.system('rm ../data/samples.h5')
 
-# Create file handle for the file of features data
-sample_file = h5.File('../data/samples.h5', 'w')
+# Open file handles to feature and target values
 target_file = h5.File('../data/sample-targets.h5', 'r')
-feature_file = h5.File('../data/sample-features.h5', 'r')
+geom_feature_file = h5.File('../data/geometry-features.h5', 'r')
 
 # The mesh dimensions
 target_mesh_x = 17
@@ -106,21 +107,16 @@ num_groups = 2
 # The number of random number seeds
 num_seeds = 10
 
-# Store attributes for the # energy groups
-sample_file.attrs['# Energy Groups'] = 2
-sample_file.attrs['# Batches'] = 1000
-sample_file.attrs['# Particles / Batch'] = 40000
-sample_file.attrs['# Inactive Batches'] = 250
-
 # We have three different types of nuclear fuel assemblies (17 x 17 fuel pins)
 assemblies = ['Fuel-1.6wo-CRD', \
               'Fuel-2.4wo-16BA-grid-56', \
               'Fuel-3.1wo-instr-16BA-grid-17']
 
-batches = [10, 50, 100, 200, 300, 400, 500] # 600, 700, 800, 900, 1000]
+batches = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
 # We have five different random number seeds
-seeds = ['seed-1', 'seed-2', 'seed-3']
+seeds = ['seed-1', 'seed-2', 'seed-3', 'seed-4', 'seed-5', \
+             'seed-6', 'seed-7', 'seed-8', 'seed-9', 'seed-10']
 
 energies = ['High Energy', 'Low Energy']
 
@@ -130,12 +126,22 @@ datasets = ['Flux', 'Tot. RXN Rate', 'Abs. RXN Rate', 'Fiss. RXN Rate', \
 # Loop over assemblies, random number seeds, batches, energies and datasets
 for assembly in assemblies:
 
-    print 'Exporting ' + assembly
+    # Create file handle for the file of features data
+    sample_file = h5.File('../data/' + assembly + '-samples.h5', 'w')
+    sample_file.attrs['# Energy Groups'] = 2
+    sample_file.attrs['# Batches'] = 1000
+    sample_file.attrs['# Particles / Batch'] = 40000
+    sample_file.attrs['# Inactive Batches'] = 250
 
+    mc_feature_file = h5.File('../data/' + assembly + '-features.h5', 'r')
+
+    print 'Exporting ' + assembly
+    
     # Create an HDF5 group for this assembly in our 'samples.h5' file
     assembly_group = sample_file.create_group(assembly)
 
     targets = target_file[assembly]
+    geom_features = geom_feature_file[assembly]
 
     for seed in seeds:
 
@@ -149,7 +155,7 @@ for assembly in assemblies:
                 batch_group = assembly_group.create_group('Batch-'+str(batch))
 
             batch_group = assembly_group['Batch-'+str(batch)]
-            features = feature_file[assembly][seed]['Batch-'+str(batch+250)]
+            mc_features = mc_feature_file[assembly][seed]['Batch-'+str(batch+250)]
 
             for energy in energies:
 
@@ -164,12 +170,14 @@ for assembly in assemblies:
                         dataset_group = energy_group.create_group(dataset)
                     
                     dataset_group = energy_group[dataset]
-                    exportSamples(dataset_group, features, targets, energy, dataset)
+                    exportSamples(dataset_group, mc_features, geom_features, targets, energy, dataset)
+
+    sample_file.close()
+    mc_feature_file.close()
 
 
 print 'Finished'
 
 
-sample_file.close()
-feature_file.close()
+geom_feature_file.close()
 target_file.close()

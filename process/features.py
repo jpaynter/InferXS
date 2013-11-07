@@ -28,9 +28,6 @@ import os
 # Remove old HDF5 features data file
 os.system('rm ../data/sample-features.h5')
 
-# Create file handle for the file of features data
-f = h5.File('../data/sample-features.h5')
-
 # The mesh dimensions
 x = 51
 y = 51
@@ -41,27 +38,29 @@ groups = 2
 # The batch numbers of interest
 batches = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
-# Store attributes for # energy groups
-f.attrs['# Energy Groups'] = 2
-
-f.attrs['# Particles / Batch'] = 40000
-f.attrs['# Inactive Batches'] = 250
-
 # We have three different types of nuclear fuel assemblies (17 x 17 fuel pins)
 assemblies = ['Fuel-1.6wo-CRD', \
               'Fuel-2.4wo-16BA-grid-56', \
               'Fuel-3.1wo-instr-16BA-grid-17']
 
 # We have five different random number seeds
-seeds = ['seed-1', 'seed-2', 'seed-3']
+seeds = ['seed-1', 'seed-2', 'seed-3', 'seed-4', 'seed-5', \
+             'seed-6', 'seed-7', 'seed-8', 'seed-9', 'seed-10']
 
 # Loop over assemblies
 for assembly in assemblies:
 
     print 'Exporting ' + assembly
 
+    # Create file handle for the file of features data
+    feature_file = h5.File('../data/' + assembly + '-features.h5')
+    feature_file.attrs['# Energy Groups'] = 2
+    feature_file.attrs['# Particles / Batch'] = 40000
+    feature_file.attrs['# Inactive Batches'] = 250
+
+
     # Create an HDF5 group for this assembly in our 'features.h5' file
-    assembly_group = f.create_group(assembly)
+    assembly_group = feature_file.create_group(assembly)
 
     # Loop over random number seeds
     for seed in seeds:
@@ -138,5 +137,4 @@ for assembly in assemblies:
             high_energy.create_dataset('NuFiss. XS', data=nufiss_xs[:,:,0])
             low_energy.create_dataset('NuFiss. XS', data=nufiss_xs[:,:,1])
 
-# Close the HDF5 file
-f.close()
+    feature_file.close()

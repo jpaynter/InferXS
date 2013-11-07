@@ -94,6 +94,7 @@ for assembly in assemblies:
         
             # Read in the tally results for this batch
             filename = 'statepoint.' + str(int(batch[1])) + '.h5'
+            print directory + filename
             sp = StatePoint(directory + filename)
             sp.read_results()
 
