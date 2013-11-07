@@ -23,8 +23,6 @@ import numpy as np
 #    Fuel-3.1wo-instr-16BA-grid-17
 sample_file = h5.File('data/Fuel-1.6wo-CRD-samples.h5', 'r')
 
-print sample_file.keys()
-
 # Different batch means are available:
 #     10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000
 batch = 'Batch-200'
