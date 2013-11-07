@@ -31,11 +31,11 @@ os.system('rm ../data/sample-targets.h5')
 f = h5.File('../data/sample-targets.h5')
 
 # The mesh dimensions
-mesh_x = 17
-mesh_y = 17
+x = 17
+y = 17
 
 # The number of energy groups (1 - high energy, 2 - low energy)
-num_groups = 2
+groups = 2
 
 # Store attributes for # energy groups
 f.attrs['# Energy Groups'] = 2
@@ -59,7 +59,7 @@ for assembly in assemblies:
     low_energy = assembly_group.create_group('Low Energy')
 
     # Import the OpenMC results for this assembly
-    sp = StatePoint('../openmc-input/'+assembly+'/pinwise/statepoint.1000.h5')
+    sp = StatePoint('../openmc-input/'+assembly+'/pinwise/statepoint.1250.h5')
     sp.read_results()
 
     # Extract 2D numpy arrays of the batch means for each type of tally
@@ -70,11 +70,11 @@ for assembly in assemblies:
     nufiss_rxn_rate = sp.extract_results(1, 'nu-fission')['mean']
 
     # Reshape to grid with energy group as third index
-    flux = np.reshape(flux, (mesh_x, mesh_y, num_groups))
-    tot_rxn_rate = np.reshape(tot_rxn_rate, (mesh_x, mesh_y, num_groups))
-    abs_rxn_rate = np.reshape(abs_rxn_rate, (mesh_x, mesh_y, num_groups))
-    fiss_rxn_rate = np.reshape(fiss_rxn_rate, (mesh_x, mesh_y, num_groups))
-    nufiss_rxn_rate = np.reshape(nufiss_rxn_rate, (mesh_x, mesh_y, num_groups))
+    flux = np.reshape(flux, (x, y, groups))
+    tot_rxn_rate = np.reshape(tot_rxn_rate, (x, y, groups))
+    abs_rxn_rate = np.reshape(abs_rxn_rate, (x, y, groups))
+    fiss_rxn_rate = np.reshape(fiss_rxn_rate, (x, y, groups))
+    nufiss_rxn_rate = np.reshape(nufiss_rxn_rate, (x, y, groups))
 
     # Compute group cross-sections for both energy groups
     tot_xs = np.nan_to_num(tot_rxn_rate / flux)
@@ -109,8 +109,6 @@ for assembly in assemblies:
 
     high_energy.create_dataset('NuFiss. XS', data=nufiss_xs[:,:,0])
     low_energy.create_dataset('NuFiss. XS', data=nufiss_xs[:,:,1])
-
-print 'Finished'
 
 # Close the HDF5 file
 f.close()

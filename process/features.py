@@ -32,14 +32,14 @@ os.system('rm ../data/sample-features.h5')
 f = h5.File('../data/sample-features.h5')
 
 # The mesh dimensions
-mesh_x = 51
-mesh_y = 51
+x = 51
+y = 51
 
 # The number of energy groups (1 - high energy, 2 - low energy)
-num_groups = 2
+groups = 2
 
 # The batch numbers of interest
-batches = [10, 50, 100, 200, 300, 400, 500] # 600, 700, 800, 900, 1000]
+batches = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
 # Store attributes for # energy groups
 f.attrs['# Energy Groups'] = 2
@@ -55,7 +55,7 @@ assemblies = ['Fuel-1.6wo-CRD', \
 # We have five different random number seeds
 seeds = ['seed-1', 'seed-2', 'seed-3']
 
-# Loop over assemblies, random number seeds, and batches
+# Loop over assemblies
 for assembly in assemblies:
 
     print 'Exporting ' + assembly
@@ -63,18 +63,23 @@ for assembly in assemblies:
     # Create an HDF5 group for this assembly in our 'features.h5' file
     assembly_group = f.create_group(assembly)
 
+    # Loop over random number seeds
     for seed in seeds:
 
         print '    ' + seed
         
-        # Create an HDF5 group for this random number seed within this assembly in 'features.h5'
+        # Create an HDF5 group for this random number seed within this 
+        # assembly in 'features.h5'
         seed_group = assembly_group.create_group(seed)
 
+        # Loop over batches
         for batch in batches:
             
+            # Increment batch number to account for inactive batches
             batch += 250
             print '        batch-' + str(batch)
 
+            # Create groups for batch, energy in HDF5 file
             batch_group = seed_group.create_group('Batch-'+str(batch))
             high_energy = batch_group.create_group('High Energy')
             low_energy = batch_group.create_group('Low Energy')
@@ -93,11 +98,11 @@ for assembly in assemblies:
             nufiss_rxn_rate = sp.extract_results(1, 'nu-fission')['mean']
 
             # Reshape to grid with energy group as third index
-            flux = np.reshape(flux, (mesh_x, mesh_y, num_groups))
-            tot_rxn_rate = np.reshape(tot_rxn_rate, (mesh_x, mesh_y, num_groups))
-            abs_rxn_rate = np.reshape(abs_rxn_rate, (mesh_x, mesh_y, num_groups))
-            fiss_rxn_rate = np.reshape(fiss_rxn_rate, (mesh_x, mesh_y, num_groups))
-            nufiss_rxn_rate = np.reshape(nufiss_rxn_rate, (mesh_x, mesh_y, num_groups))
+            flux = np.reshape(flux, (x, y, groups))
+            tot_rxn_rate = np.reshape(tot_rxn_rate, (x, y, groups))
+            abs_rxn_rate = np.reshape(abs_rxn_rate, (x, y, groups))
+            fiss_rxn_rate = np.reshape(fiss_rxn_rate, (x, y, groups))
+            nufiss_rxn_rate = np.reshape(nufiss_rxn_rate, (x, y, groups))
 
             # Compute group cross-sections for both energy groups
             tot_xs = np.nan_to_num(tot_rxn_rate / flux)
@@ -132,8 +137,6 @@ for assembly in assemblies:
 
             high_energy.create_dataset('NuFiss. XS', data=nufiss_xs[:,:,0])
             low_energy.create_dataset('NuFiss. XS', data=nufiss_xs[:,:,1])
-
-print 'Finished'
 
 # Close the HDF5 file
 f.close()

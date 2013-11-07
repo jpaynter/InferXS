@@ -6,7 +6,7 @@ import time
 # User parameters
 sleep_interval = 0    # seconds
 batch_start = 260
-batch_stop = 1000
+batch_stop = 1250
 batch_interval = 10
 
 directory = '../openmc-input/Fuel-1.6wo-CRD/pinwise/'
