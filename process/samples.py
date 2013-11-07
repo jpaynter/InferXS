@@ -136,9 +136,6 @@ for assembly in assemblies:
     mc_feature_file = h5.File('../data/' + assembly + '-features.h5', 'r')
 
     print 'Exporting ' + assembly
-    
-    # Create an HDF5 group for this assembly in our 'samples.h5' file
-    assembly_group = sample_file.create_group(assembly)
 
     targets = target_file[assembly]
     geom_features = geom_feature_file[assembly]
@@ -151,10 +148,10 @@ for assembly in assemblies:
 
             print '        batch-'+str(batch)
 
-            if not ('Batch-'+str(batch)) in assembly_group.keys():
-                batch_group = assembly_group.create_group('Batch-'+str(batch))
+            if not ('Batch-'+str(batch)) in sample_file.keys():
+                batch_group = sample_file.create_group('Batch-'+str(batch))
 
-            batch_group = assembly_group['Batch-'+str(batch)]
+            batch_group = sample_file['Batch-'+str(batch)]
             mc_features = mc_feature_file[assembly][seed]['Batch-'+str(batch+250)]
 
             for energy in energies:

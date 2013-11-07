@@ -17,13 +17,13 @@ import numpy as np
 ################################################################################
 
 # Create a file handle for the samples file
-file = h5.File('data/samples.h5', 'r')
-
 # 3 Assembly types are available:
 #    Fuel-1.6wo-CRD
 #    Fuel-2.4wo-16BA-grid-56
 #    Fuel-3.1wo-instr-16BA-grid-17
-assembly = 'Fuel-1.6wo-CRD'
+sample_file = h5.File('data/Fuel-1.6wo-CRD-samples.h5', 'r')
+
+print sample_file.keys()
 
 # Different batch means are available:
 #     10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000
@@ -46,10 +46,10 @@ tally = 'Tot. XS'
 ################################################################################
 
 # Get target regression values for each sample
-targets = file[assembly][batch][energy][tally]['Targets'][...]
+targets = sample_file[batch][energy][tally]['Targets'][...]
 
 # Get the feature vectors for each sample
-features = file[assembly][batch][energy][tally]['Features'][...]
+features = sample_file[batch][energy][tally]['Features'][...]
 
 
 
