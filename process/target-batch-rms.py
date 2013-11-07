@@ -36,7 +36,7 @@ energies = ['Low Energy', 'High Energy']
 
 # Batch numbers of interest - 260 to 1240 in increments of 10
 batches = np.linspace(260,1240,99)
-rms_file.create_dataset('Batches', data=batches)
+rms_file.create_dataset('Batches', data=batches-250)
 
 # Loop over each assembly type
 for assembly in assemblies:
