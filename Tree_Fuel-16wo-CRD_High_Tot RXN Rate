@@ -1,7 +1,6 @@
 import h5py as h5
 import numpy as np
 import pylab as pl
-import math
 from sklearn.svm import SVR
 from sklearn.cross_validation import train_test_split
 
