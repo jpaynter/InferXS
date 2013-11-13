@@ -32,11 +32,7 @@ assemblies = ['Fuel-1.6wo-CRD', \
               'Fuel-2.4wo-16BA-grid-56', \
               'Fuel-3.1wo-instr-16BA-grid-17']
 
-# The type of OpenMC tallies
-tallies = ['Flux', 'Tot. RXN Rate', 'Abs. RXN Rate', 'Fiss. RXN Rate', \
-           'NuFiss. RXN Rate', 'Tot. XS', 'Abs. XS', 'Fiss. XS', 'NuFiss. XS']
-
-# The energy levels for the tallies
+tallies = ['Tot. XS', 'Abs. XS', 'Fiss. XS', 'NuFiss. XS']
 energies = ['Low Energy', 'High Energy']
 
 # The batches of interest 10, 20, ..., 1000
