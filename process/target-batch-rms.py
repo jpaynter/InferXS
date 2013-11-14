@@ -16,6 +16,12 @@ import h5py as h5
 import numpy as np
 import os
 
+import socket
+if socket.gethostname() is not 'nsecluster.mit.edu':
+    print 'Unable to run this file except on nsecluster where the OpenMC ' + \
+        'statepoint files are stored'
+    exit()
+
 # Create HDF5 file handle for each assembly's RMS error
 rms_file = h5.File('../data/target-batch-rms.h5', 'w')
 
