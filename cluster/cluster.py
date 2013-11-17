@@ -66,8 +66,7 @@ class Cluster:
 
         
         if method.lower() == 'kmeans':
-            self._model = KMeans(init='k-means++', k=self._num_clusters, 
-                                n_init=10)
+            self._model = KMeans(init='k-means++', n_clusters=self._num_clusters, n_init=10)
             self._model.fit(self._X)
 
         # TODO: Implement other clustering algorithms HERE
