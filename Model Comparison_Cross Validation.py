@@ -38,6 +38,7 @@ gamma = [.001,.01,0.1,.2,.3,.4,.5,.6,.7,.8,.9,1,10]
 
 # CART parameters
 min_samples_leaf = [3,5,8,10,12,15,17,20,23]
+max_depth = [2,3,4,5,6]
 
 # Number of PCA components
 num_components = 3
@@ -147,7 +148,7 @@ for energy in energies:
         ############################   CART    #########################
         ################################################################
 
-        scores_CART = list()
+        scores_CART = [[] for x in range(3)]
         scores_std_CART = list()
                     
         # Extract features/targets for this cluster's samples
@@ -163,14 +164,34 @@ for energy in energies:
 
             this_scores = cross_validation.cross_val_score(model_CART, features, targets, \
                                                                scoring='mean_squared_error')
-            scores_CART.append(np.mean(this_scores))
+            scores_CART[0].append(0)
+            scores_CART[1].append(leaf)
+            scores_CART[2].append(np.mean(this_scores))
             scores_std_CART.append(np.std(this_scores))
 
-        best_leaf = min_samples_leaf[scores_CART.index(max(scores_CART))]
-        print 'For CART, best min samples per leaf is %f' %(best_leaf)
+        for depth in max_depth:
 
+            # Fit a CART model on these samples
+            model_CART = tree.DecisionTreeRegressor(max_depth=depth)
+            model_CART.fit(features, targets)
+
+            this_scores = cross_validation.cross_val_score(model_CART, features, targets, \
+                                                               scoring='mean_squared_error')
+            scores_CART[0].append(1)
+            scores_CART[1].append(depth)
+            scores_CART[2].append(np.mean(this_scores))
+            scores_std_CART.append(np.std(this_scores))
+
+        best_param_type = scores_CART[0][scores_CART[2].index(max(scores_CART[2]))]
+        best_param = scores_CART[1][scores_CART[2].index(max(scores_CART[2]))]
+        types = ['min samples per leaf', 'max depth']
+        print 'For CART, best parameter is %s of %0.2g' %(types[best_param_type], best_param)
+    
         # Retrain the model for the best parameters
-        model_CART = tree.DecisionTreeRegressor(min_samples_leaf=best_leaf)
+        if best_param_type == 0:
+            model_CART = tree.DecisionTreeRegressor(min_samples_leaf=best_param)
+        else:
+            model_CART = tree.DecisionTreeRegressor(max_depth=best_param)
         model_CART.fit(features, targets)
         
         ################################################################
@@ -228,8 +249,8 @@ for energy in energies:
                     scores_CLSVR[1].append(p)
                     scores_CLSVR[2].append(g)
 
-            best_c[c] = scores_CLSVR[1][scores_CLSVR.index(max(scores_CLSVR))]
-            best_gamma[c] = scores_CLSVR[2][scores_CLSVR.index(max(scores_CLSVR))]
+            best_c[c] = scores_CLSVR[1][scores_CLSVR[0].index(max(scores_CLSVR[0]))]
+            best_gamma[c] = scores_CLSVR[2][scores_CLSVR[0].index(max(scores_CLSVR[0]))]
    
             # Retrain the model for the best parameters
             models_CLSVR[c] = SVR(kernel=kernel, C=best_c[c], gamma=best_gamma[c])
@@ -238,7 +259,7 @@ for energy in energies:
         print 'In CL SVR, the best gammas are: %0.3g, %0.3g, %0.3g, %0.3g, %0.3g, %0.3g' \
               %(best_gamma[0], best_gamma[1], best_gamma[2], best_gamma[3], \
                 best_gamma[4], best_gamma[5])
-        print 'In CL SVR, the best Cs are: %0.3g, %0.3g, %0.3g, %0.3g, %0.3g, %0.3g' \
+        print 'In CL SVR, the best Cs are: %0.3g, %0.3g %0.3g, %0.3g, %0.3g, %0.3g' \
               %(best_c[0], best_c[1], best_c[2], best_c[3], \
                 best_c[4], best_c[5])
 
@@ -367,28 +388,49 @@ for energy in energies:
 ###########################    PLOTS   #########################
 ################################################################
 
-# Plot the RMS for this tally, energy
-count = 0
-for energy in energies:
-    plt.semilogy(rms_ref['Batches'],
-             rms_ref[assembly][energy][tally][...], linewidth=2)
-    plt.semilogy(batches, rms_SVR[count], linewidth=2)
-    plt.semilogy(batches, rms_CART[count], linewidth=2)
-    plt.semilogy(batches, rms_CLSVR[count], linewidth=2)
-    count = count + 1
+# Plot the RMS for this tally, low energy
+
+energy = 'Low Energy'
+plt.semilogy(rms_ref['Batches'],rms_ref[assembly][energy][tally][...], linewidth=2)
+plt.semilogy(batches, rms_SVR[0], linewidth=2)
+plt.semilogy(batches, rms_CART[0], linewidth=2)
+plt.semilogy(batches, rms_CLSVR[0], linewidth=2)
     
 # Annotate the plot
 plt.ylabel('Root Mean Squared Error')
 plt.xlabel('Batch #')
-plt.title(assembly + ' ' + tally + ' RMS')
+plt.title(assembly + ' ' + tally + ' Low Energy' + ' RMS')
 plt.grid(b=True, which='major', color='b', linestyle='-')
 plt.grid(b=True, which='minor', color='r', linestyle='--')
 plt.legend(['Low Energy - Actual','Low Energy - RBF SVR', 'Low Energy - CART',
-            'Low Energy - RBF CL SVR','High Energy - Actual', 'High Energy - RBF SVR',
-            'High Energy - CART', 'High Energy - RBF CL SVR'])
+            'Low Energy - RBF CL SVR'])
 
 # Save the plot
-filename = tally.replace('.', '').replace(' ', '-').lower()
+filename = 'Low-Energy' + tally.replace('.', '').replace(' ', '-').lower()
+filename = 'process/rms-plots/' + assembly + '/' + filename + '.png'
+plt.savefig(filename)
+
+plt.show()
+
+# Plot the RMS for this tally, high energy
+
+energy = 'High Energy'
+plt.semilogy(rms_ref['Batches'],rms_ref[assembly][energy][tally][...], linewidth=2)
+plt.semilogy(batches, rms_SVR[1], linewidth=2)
+plt.semilogy(batches, rms_CART[1], linewidth=2)
+plt.semilogy(batches, rms_CLSVR[1], linewidth=2)
+    
+# Annotate the plot
+plt.ylabel('Root Mean Squared Error')
+plt.xlabel('Batch #')
+plt.title(assembly + ' ' + tally + ' High Energy' + ' RMS')
+plt.grid(b=True, which='major', color='b', linestyle='-')
+plt.grid(b=True, which='minor', color='r', linestyle='--')
+plt.legend(['High Energy - Actual','High Energy - RBF SVR', 'High Energy - CART',
+            'High Energy - RBF CL SVR'])
+
+# Save the plot
+filename = 'High-Energy' + tally.replace('.', '').replace(' ', '-').lower()
 filename = 'process/rms-plots/' + assembly + '/' + filename + '.png'
 plt.savefig(filename)
 
