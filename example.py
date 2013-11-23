@@ -32,8 +32,6 @@ batch = 'Batch-200'
 energy = 'Low Energy'
 
 # Different tally types are available:
-#    Flux
-#    Tot. RXN Rate, Abs. RXN Rate, Fiss. RXN Rate, NuFiss RXN Rate
 #    Tot. XS, Abs. XS, Fiss. XS, NuFiss. XS
 tally = 'Tot. XS'
 
