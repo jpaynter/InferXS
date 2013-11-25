@@ -84,7 +84,8 @@ for c in range(num_clusters):
     print '%d\t\t%d\t\t%f\t\t%f' % (c, num_samples, mean, std_dev)
     
     fig = plt.figure()
-    n, bins, patches = plt.hist(cluster_targets, 8, histtype='step')
+    n, bins, patches = plt.hist(cluster_targets, 8, color='green', \
+                                histtype='bar', hatch='//', edgecolor='black')
 
     # Annotate the plot and save it to /cluster/histograms
     plt.xlabel('Tot. XS')
