@@ -1,4 +1,4 @@
-'''Performs SVR regression for a single dataset without clustering.
+'''Performs cross-validation of various models for a single dataset.
 
    Author: Jonathan Paynter
    Date: 11/11/2013
@@ -20,7 +20,9 @@
 
       1) SVR - RBF kernel with: width (gamma), and penalty (C)
       2) CART1 - Regression tree with: samples per leaf (min_samples_leaf)
-      3) Cluster/SVR - Kmeans cluster with varying k; SVR as (1)    
+      3) Cluster/SVR - KMeans clustering with varying k; SVR as (1)    
+      4) Cluster AVG - KMeans clustering with varying k; Average of target 
+         values within each cluster
 '''
 
 import math
@@ -53,7 +55,7 @@ max_depth = [2,3,4,5,6]
 num_components = 3
 
 # Number of clusters to find
-num_clusters = 6
+num_clusters = 2
 
 
 
@@ -82,6 +84,7 @@ sample_file = h5.File('data/' + assembly + '-samples.h5', 'r')
 rms_SVR = np.zeros((len(energies), len(batches)))
 rms_CART = np.zeros((len(energies), len(batches)))
 rms_CLSVR = np.zeros((len(energies), len(batches)))
+rms_CLAVG = np.zeros((len(energies), len(batches)))
 
 # Iterate over energies (Low, High)
 count = 0
@@ -109,9 +112,9 @@ for energy_index, energy in enumerate(energies):
         X = sample_file[batch][energy][tally]['Features'][...]
         
 
-        #########################################################################
-        ################    TRAININING/TESTING DATA SPLITTING   #################
-        #########################################################################
+        ########################################################################
+        ################    TRAININING/TESTING DATA SPLITTING   ################
+        ########################################################################
 
         scores = list()
         scores_std = list()
@@ -124,9 +127,9 @@ for energy_index, energy in enumerate(energies):
                                                             test_size=split, \
                                                             random_state=10)
 
-        #########################################################################
-        #####################   SVR REGRESSION W/O CLUSTERING  ##################
-        #########################################################################
+        ########################################################################
+        #####################   SVR REGRESSION W/O CLUSTERING  #################
+        ########################################################################
 
         # We will store scores, g, and c in this list
         scores_SVR = [[] for x in range(3)]
@@ -145,9 +148,9 @@ for energy_index, energy in enumerate(energies):
                 model_SVR.fit(features, targets)
 
                 scores = cross_validation.cross_val_score(model_SVR, \
-                                                    features, \
-                                                    targets, \
-                                                    scoring='mean_squared_error')
+                                                   features, \
+                                                   targets, \
+                                                   scoring='mean_squared_error')
 
                 scores_SVR[0].append(np.mean(scores))
                 scores_std_SVR.append(np.std(scores))
@@ -166,9 +169,9 @@ for energy_index, energy in enumerate(energies):
         model_SVR.fit(features, targets)
 
 
-        #########################################################################
-        ################################   CART    ##############################
-        #########################################################################
+        ########################################################################
+        ################################   CART    #############################
+        ########################################################################
 
         scores_CART = [[] for x in range(3)]
         scores_std_CART = []
@@ -185,9 +188,9 @@ for energy_index, energy in enumerate(energies):
             model_CART.fit(features, targets)
 
             scores = cross_validation.cross_val_score(model_CART, \
-                                                    features, \
-                                                    targets, \
-                                                    scoring='mean_squared_error')
+                                                   features, \
+                                                   targets, \
+                                                   scoring='mean_squared_error')
             scores_CART[0].append(0)
             scores_CART[1].append(leaf)
             scores_CART[2].append(np.mean(scores))
@@ -201,9 +204,9 @@ for energy_index, energy in enumerate(energies):
             model_CART.fit(features, targets)
 
             scores = cross_validation.cross_val_score(model_CART, \
-                                                    features, \
-                                                    targets, \
-                                                    scoring='mean_squared_error')
+                                                   features, \
+                                                   targets, \
+                                                   scoring='mean_squared_error')
             scores_CART[0].append(1)
             scores_CART[1].append(depth)
             scores_CART[2].append(np.mean(scores))
@@ -226,9 +229,9 @@ for energy_index, energy in enumerate(energies):
         model_CART.fit(features, targets)
 
         
-        #########################################################################
-        #############################   CLUSTERING   ############################
-        #########################################################################
+        ########################################################################
+        #############################   CLUSTERING   ###########################
+        ########################################################################
 
         # Build a cluster model using PCA transformation and KMeans
         cluster_model = cluster.Cluster(X_train)
@@ -243,9 +246,9 @@ for energy_index, energy in enumerate(energies):
         X_train_PCA = cluster_model.apply_pca_model(X_train)
 
 
-        #########################################################################
-        ######################  SVR REGRESSION W/CLUSTERING  ####################
-        #########################################################################
+        ########################################################################
+        ######################  SVR REGRESSION W/CLUSTERING  ###################
+        ########################################################################
 
         # Initialize an empty dictionary to contain SVR models
         # for each cluster, indexed by cluster ID
@@ -276,9 +279,9 @@ for energy_index, energy in enumerate(energies):
                     models_CLSVR[c].fit(features, targets)
 
                     scores = cross_validation.cross_val_score(models_CLSVR[c], \
-                                                    features, \
-                                                    targets, \
-                                                    scoring='mean_squared_error')
+                                                   features, \
+                                                   targets, \
+                                                   scoring='mean_squared_error')
 
                     scores_CLSVR[0].append(np.mean(scores))
                     scores_std_CLSVR.append(np.std(scores))
@@ -298,11 +301,21 @@ for energy_index, energy in enumerate(energies):
         print '    Optimal Clustered SVR:    c=' + str(best_c)
 
 
-        #########################################################################
-        ###################   SVR PREDICTION W/O CLUSTERING   ###################
-        #########################################################################
 
-        ##############################  TRAINING  ###############################
+        ########################################################################
+        #############################  CLUSTER AVERAGE  ########################
+        ########################################################################
+ 
+        # Fit an averaging model for samples within each cluster
+        model_CLAVG = cluster.AveragingModel(cluster_model)
+        model_CLAVG.build_model(y_train)
+
+
+        ########################################################################
+        ###################   SVR PREDICTION W/O CLUSTERING   ##################
+        ########################################################################
+
+        ##############################  TRAINING  ##############################
 
         # Initialize an empty array for the predicted target values
         y_train_predict_SVR = np.zeros(len(y_train))
@@ -310,7 +323,7 @@ for energy_index, energy in enumerate(energies):
         # Store the predicted values for this cluster's samples
         y_train_predict_SVR = model_SVR.predict(X_train)
 
-        ###############################  TESTING  ###############################
+        ###############################  TESTING  ##############################
 
         # Initialize an empty array for the predicted target values
         y_test_predict_SVR = np.zeros(len(y_test))
@@ -319,11 +332,11 @@ for energy_index, energy in enumerate(energies):
         y_test_predict_SVR = model_SVR.predict(X_test)
 
 
-        #########################################################################
-        ########################### CART PREDICTION   ###########################
-        #########################################################################
+        ########################################################################
+        ########################### CART PREDICTION   ##########################
+        ########################################################################
 
-        ###############################  TRAINING  ##############################
+        ###############################  TRAINING  #############################
 
         # Initialize an empty array for the predicted target values
         y_train_predict_CART = np.zeros(len(y_train))
@@ -331,7 +344,7 @@ for energy_index, energy in enumerate(energies):
         # Store the predicted values for this cluster's samples
         y_train_predict_CART = model_CART.predict(X_train)
 
-        ###############################  TESTING  ###############################
+        ###############################  TESTING  ##############################
 
         # Initialize an empty array for the predicted target values
         y_test_predict_CART = np.zeros(len(y_test))
@@ -340,11 +353,11 @@ for energy_index, energy in enumerate(energies):
         y_test_predict_CART = model_CART.predict(X_test)
           
 
-        #########################################################################
-        #####################   SVR PREDICTION W/CLUSTERING   ###################
-        #########################################################################
+        ########################################################################
+        #####################   SVR PREDICTION W/CLUSTERING   ##################
+        ########################################################################
 
-        ###############################  TRAINING  ##############################
+        ###############################  TRAINING  #############################
 
         # Initialize an empty array for the predicted target values
         y_train_predict_CLSVR = np.zeros(len(y_train))
@@ -357,32 +370,47 @@ for energy_index, energy in enumerate(energies):
             features = X_train_PCA[indices[c],:]
                     
             # Store the predicted values for this cluster's samples
-            y_train_predict_CLSVR[indices[c]] = models_CLSVR[c].predict(features)
+            y_train_predict_CLSVR[indices[c]]=models_CLSVR[c].predict(features)
 
-
-        ###############################  TESTING  ###############################
-                
-        # Get the cluster IDs for each test sample
-        #     ie, 0 - cluster 0, 1 - cluster 1, ...
-        indices = cluster_model.clusterize(X_test_PCA)
+        ###############################  TRAINING  #############################
 
         # Initialize an empty array for the predicted target values
         y_test_predict_CLSVR = np.zeros(len(y_test))
 
+        # Get the cluster IDs for each training sample
+        #     ie, 0 - cluster 0, 1 - cluster 1, ...
+        indices = cluster_model.clusterize(X_test_PCA)
+
         # Loop over each cluster and make predictions for each 
-        # test sample
+        # training sample
         for c in range(num_clusters):
 
             # Extract features for this cluster's samples
-            features = X_test_PCA[indices[c]]
-
+            features = X_test_PCA[indices[c],:]
+                    
             # Store the predicted values for this cluster's samples
-            y_test_predict_CLSVR[indices[c]] = models_CLSVR[c].predict(features)
+            y_test_predict_CLSVR[indices[c]]=models_CLSVR[c].predict(features)
+
+
+
+        ########################################################################
+        #####################   CLUSTER AVERAGE PREDICTION   ###################
+        ########################################################################
+
+        ###############################  TRAINING  #############################
+
+        # Predict the target values for each training sample
+        y_train_predict_CLAVG = model_CLAVG.predict(X_train_PCA)
+
+        ###############################  TESTING  ##############################
+
+        # Predict the target values for each test sample
+        y_test_predict_CLAVG = model_CLAVG.predict(X_test_PCA)
     
 
-        #########################################################################
-        #######################    TRAINING/TESTING ERROR   #####################
-        #########################################################################
+        ########################################################################
+        #######################    TRAINING/TESTING ERROR   ####################
+        ########################################################################
 
         # Compute the RMS error for the training and test samples
         train_error_SVR = np.power(y_train_predict_SVR - y_train, 2)
@@ -401,7 +429,13 @@ for energy_index, energy in enumerate(energies):
         test_error_CLSVR = np.power(y_test_predict_CLSVR - y_test, 2)
         train_error_CLSVR = np.sqrt(np.mean(train_error_CLSVR))
         test_error_CLSVR = np.sqrt(np.mean(test_error_CLSVR))
-        
+
+        # Compute the RMS error for the training and test samples
+        train_error_CLAVG = np.power(y_train_predict_CLAVG - y_train, 2)
+        test_error_CLAVG = np.power(y_test_predict_CLAVG - y_test, 2)
+        train_error_CLAVG = np.sqrt(np.mean(train_error_CLAVG))
+        test_error_CLAVG = np.sqrt(np.mean(test_error_CLAVG))
+
         # Store the RMS error for this 
         rms_SVR[energy_index][batch_index] = test_error_SVR
 
@@ -410,6 +444,9 @@ for energy_index, energy in enumerate(energies):
 
         # Store the RMS error for this 
         rms_CLSVR[energy_index][batch_index] = test_error_CLSVR
+
+        # Store the RMS error for this 
+        rms_CLAVG[energy_index][batch_index] = test_error_CLAVG
         
         # Print the results for this case to the screen
         print '    SVR: \t train err. %0.3g \t test err. %0.3g' \
@@ -418,13 +455,14 @@ for energy_index, energy in enumerate(energies):
                 % (train_error_CART, test_error_CART)
         print '    CL SVR: \t train err. %0.3g \t test err. %0.3g' \
                 % (train_error_CLSVR, test_error_CLSVR)
+        print '    CL AVG: \t train err. %0.3g \t test err. %0.3g' \
+                % (train_error_CLAVG, test_error_CLAVG)
 
     count = count + 1
 
-#################################################################################
-###################################    PLOTS   ##################################
-#################################################################################
-
+################################################################################
+###################################    PLOTS   #################################
+################################################################################
 
 # Plot the RMS for this tally, low energy
 energy = 'Low Energy'
@@ -435,6 +473,7 @@ plt.semilogy(rms_ref['Batches'],rms_ref[assembly][energy][tally][...], \
 plt.semilogy(batches, rms_SVR[0], linewidth=2)
 plt.semilogy(batches, rms_CART[0], linewidth=2)
 plt.semilogy(batches, rms_CLSVR[0], linewidth=2)
+plt.semilogy(batches, rms_CLAVG[0], linewidth=2)
     
 # Annotate the plot
 plt.ylabel('RMS Error')
@@ -442,7 +481,7 @@ plt.xlabel('Batch #')
 plt.title('Low Energy ' + tally + ' RMS Error')
 plt.grid(b=True, which='major', color='b', linestyle='-')
 plt.grid(b=True, which='minor', color='r', linestyle='--')
-plt.legend(['Monte Carlo', 'RBF-SVR', 'CART', 'Clustered RBF-SVR'])
+plt.legend(['Monte Carlo', 'RBF-SVR', 'CART', 'Clustered RBF-SVR', 'Clustered Avg.'])
 
 # Save the plot
 filename = 'low-energy-' + tally.replace('.', '').replace(' ', '-').lower()
@@ -459,6 +498,7 @@ plt.semilogy(rms_ref['Batches'],rms_ref[assembly][energy][tally][...], \
 plt.semilogy(batches, rms_SVR[1], linewidth=2)
 plt.semilogy(batches, rms_CART[1], linewidth=2)
 plt.semilogy(batches, rms_CLSVR[1], linewidth=2)
+plt.semilogy(batches, rms_CLAVG[1], linewidth=2)
     
 # Annotate the plot
 plt.ylabel('RMS Error')
@@ -466,7 +506,7 @@ plt.xlabel('Batch #')
 plt.title('High Energy ' + tally + ' RMS Error')
 plt.grid(b=True, which='major', color='b', linestyle='-')
 plt.grid(b=True, which='minor', color='r', linestyle='--')
-plt.legend(['Monte Carlo', 'RBF-SVR', 'CART', 'Clustered RBF-SVR'])
+plt.legend(['Monte Carlo', 'RBF-SVR', 'CART', 'Clustered RBF-SVR', 'Clustered Avg.'])
 
 # Save the plot
 filename = 'high-energy-' + tally.replace('.', '').replace(' ', '-').lower()

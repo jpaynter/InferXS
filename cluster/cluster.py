@@ -16,7 +16,6 @@ import h5py as h5
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import scale
@@ -39,12 +38,12 @@ class Cluster:
         '''
 
         self._X = scale(X)
-        self._num_components = self._X.shape[1]
         self._model = None
         self._num_clusters = 0
 
         self._num_pca_components = 0
         self._pca_model = None
+
 
 
     ############################################################################
@@ -66,7 +65,8 @@ class Cluster:
 
         
         if method.lower() == 'kmeans':
-            self._model = KMeans(init='k-means++', n_clusters=self._num_clusters, n_init=10)
+            self._model = KMeans(init='k-means++', \
+                                     n_clusters=self._num_clusters, n_init=25)
             self._model.fit(self._X)
 
         # TODO: Implement other clustering algorithms HERE
@@ -86,7 +86,7 @@ class Cluster:
             raise Exception('Cannot make clustering predictions until' + \
                             'the buildClusters method is called')
         else:
-            self._model.predict(x)        
+            return self._model.predict(x)
 
 
     def clusterize(self, X):
@@ -110,13 +110,9 @@ class Cluster:
         # the space spanned by the singular vectors
         if self._pca_model is not None:
 
-            # If the input data is not in the PCA singular vector space
-            if X.shape[1] == self._num_components:
-                X = self._pca_model.transform(X)
-
             # If the input data does not have the same dimensionality as the
             # PCA components, then we cannot cluster within it
-            elif X.shape[1] != self._num_pca_components:
+            if X.shape[1] != self._num_pca_components:
                 raise Exception('Unable to clusterize input features since ' + \
                                  'it is not in either the space defined by ' + \
                                  'the original or PCA feature vectors')
@@ -127,6 +123,8 @@ class Cluster:
             clusters[i] = self._model.predict(X) == i
 
         return clusters
+
+
 
     ############################################################################
     #####################################  PCA  ################################
@@ -178,6 +176,7 @@ class Cluster:
         return self._pca_model.explained_variance_ratios
 
 
+
     ############################################################################
     ############################  Clustering  Metrics  #########################
     ############################################################################
@@ -220,6 +219,7 @@ class Cluster:
         return metrics.silhouette_score(self._X, self._model.labels_,
                                         metric='euclidean',
                                         sample_size=self._X.shape[0])
+
 
 
     ############################################################################
@@ -344,3 +344,48 @@ class Cluster:
         plt.title('Clusters in 3D')
         plt.legend(legend)
         plt.show()
+
+
+
+
+class AveragingModel:
+    '''
+    '''
+
+    def __init__(self, cluster):
+        '''Initialize the ClusterModel class.
+        '''
+
+        self._cluster = cluster
+
+        # Initialize array of target values for each cluster's mean
+        self._cluster_targets = np.zeros(self._cluster._num_clusters)
+
+        
+    def build_model(self, targets):
+        '''
+        '''
+
+        # Get cluster indices for each of the samples
+        cluster_indices = self._cluster.clusterize(self._cluster._X)
+
+        # Average all of the targets provided
+        for c in range(self._cluster._num_clusters):
+            self._cluster_targets[c] = np.mean(targets[cluster_indices[c]])
+                
+
+    def predict(self, X):
+        '''
+        '''
+
+        # Get cluster indices for each of the samples
+        cluster_indices = self._cluster.clusterize(X)
+
+        # Initialize an empty array for the target values for each sample
+        targets = np.zeros(X.shape[0])
+
+        # Assign the target value for each cluster to the appropriate samples
+        for c in range(self._cluster._num_clusters):
+            targets[cluster_indices[c]] = self._cluster_targets[c]
+
+        return targets
